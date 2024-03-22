@@ -195,12 +195,11 @@ class ArchivematicaServiceTest < Minitest::Test
     service = ArchivematicaService.new(
       name: "test",
       api: @mock_api,
-      location_uuid: @location_uuid,
-      stored_date: @stored_date
+      location_uuid: @location_uuid
     )
 
     @mock_api.expect(:get_packages, @test_packages, location_uuid: @location_uuid, stored_date: @stored_date)
-    package_data_objs = service.get_package_data_objects
+    package_data_objs = service.get_package_data_objects(stored_date: @stored_date)
     @mock_api.verify
 
     # No objects are filtered out
@@ -236,13 +235,14 @@ class ArchivematicaServiceTest < Minitest::Test
     service = ArchivematicaService.new(
       name: "test",
       api: @mock_api,
-      location_uuid: @location_uuid,
-      stored_date: @stored_date,
-      package_filter: SizePackageFilter.new(4000000)
+      location_uuid: @location_uuid
     )
 
     @mock_api.expect(:get_packages, @test_packages, location_uuid: @location_uuid, stored_date: @stored_date)
-    package_data_objs = service.get_package_data_objects
+    package_data_objs = service.get_package_data_objects(
+      stored_date: @stored_date,
+      package_filter: SizePackageFilter.new(4000000)
+    )
     @mock_api.verify
 
     # Larger object is filtered out

@@ -135,43 +135,43 @@ module Archivematica
 
     attr_reader :name
 
-    def initialize(
-      name:,
-      api:,
-      location_uuid:,
-      stored_date:,
-      package_filter: AllPackageFilter.new
-    )
+    def initialize(name:, api:, location_uuid:)
       @name = name
       @api = api
       @location_uuid = location_uuid
-      @stored_date = stored_date
-      @package_filter = package_filter
     end
 
-    def get_package_data_objects
+    def create_package_data_object(package)
+      logger.debug(package)
+      inner_bag_dir_name = File.basename(package.path)
+      logger.debug("Inner bag name: #{inner_bag_dir_name}")
+      ingest_dir_name = inner_bag_dir_name.gsub("-" + package.uuid, "")
+      logger.debug("Directory name on Archivematica ingest: #{ingest_dir_name}")
+      object_metadata = RepositoryData::ObjectMetadata.new(
+        id: package.uuid,
+        title: "#{package.uuid} / #{ingest_dir_name}",
+        creator: NA,
+        description: NA
+      )
+      RepositoryData::RepositoryPackageData.new(
+        remote_path: package.path,
+        metadata: object_metadata,
+        context: @name,
+        stored_time: Time.parse(package.stored_date)
+      )
+    end
+    private :create_package_data_object
+
+    # def get_package_data_object(package_id)
+    #   package = @api.get_package(package_id)
+    #   package && create_package_data_object(package)
+    # end
+
+    def get_package_data_objects(stored_date:, package_filter: AllPackageFilter.new)
       logger.info("Archivematica instance: #{@name}")
-      packages = @api.get_packages(location_uuid: @location_uuid, stored_date: @stored_date)
-      filtered_packages = @package_filter.filter(packages)
-      filtered_packages.map do |package|
-        logger.debug(package)
-        inner_bag_dir_name = File.basename(package.path)
-        logger.debug("Inner bag name: #{inner_bag_dir_name}")
-        ingest_dir_name = inner_bag_dir_name.gsub("-" + package.uuid, "")
-        logger.debug("Directory name on Archivematica ingest: #{ingest_dir_name}")
-        object_metadata = RepositoryData::ObjectMetadata.new(
-          id: package.uuid,
-          title: "#{package.uuid} / #{ingest_dir_name}",
-          creator: NA,
-          description: NA
-        )
-        RepositoryData::RepositoryPackageData.new(
-          remote_path: package.path,
-          metadata: object_metadata,
-          context: @name,
-          stored_time: Time.parse(package.stored_date)
-        )
-      end
+      packages = @api.get_packages(location_uuid: @location_uuid, stored_date: stored_date)
+      filtered_packages = package_filter.filter(packages)
+      filtered_packages.map { |package| create_package_data_object(package) }
     end
   end
 end
