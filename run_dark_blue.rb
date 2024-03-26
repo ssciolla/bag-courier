@@ -28,6 +28,11 @@ require_relative "lib/status_event_repository"
 class DarkBlueJob
   include SemanticLogger::Loggable
 
+  module ExtraBagInfoData
+    CONTENT_TYPE_KEY = "Dark-Blue-Content-Type"
+    LOCATION_UUID_KEY = "Archivematica-Location-UUID"
+  end
+
   def initialize(config)
     @package_repo = RepositoryPackageRepository::RepositoryPackageRepositoryFactory.for(use_db: DB)
     @dispatcher = Dispatcher::APTrustDispatcher.new(
@@ -68,6 +73,11 @@ class DarkBlueJob
         **(@object_size_limit ? {package_filter: Archivematica::SizePackageFilter.new(@object_size_limit)} : {})
       ).get_package_data_objects
 
+      extra_bag_info = {
+        ExtraBagInfoData::CONTENT_TYPE_KEY => arch_config.name,
+        ExtraBagInfoData::LOCATION_UUID_KEY => api_config.location_uuid
+      }
+
       package_data_objs.each do |package_data|
         logger.debug(package_data)
         created = @package_repo.create(
@@ -88,7 +98,8 @@ class DarkBlueJob
             remote_client: remote_client,
             remote_path: package_data.remote_path
           ),
-          context: package_data.context
+          context: package_data.context,
+          extra_bag_info: extra_bag_info
         )
         courier.deliver
       end

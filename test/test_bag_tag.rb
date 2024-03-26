@@ -35,14 +35,16 @@ class BagInfoBagTagTest < Minitest::Test
         identifier: "2124796",
         description: "Bag from repository X containing item to be preserved",
         bag_count: [2, 3],
-        organization: "Mythical University"
+        organization: "Mythical University",
+        extra_data: {"Context" => "Some important detail"}
       )
       expected = {
         "Source-Organization" => "Mythical University",
         "Bag-Count" => "2 of 3",
         "Bagging-Date" => "2023-12-07T12:00:00Z",
         "Internal-Sender-Identifier" => "2124796",
-        "Internal-Sender-Description" => "Bag from repository X containing item to be preserved"
+        "Internal-Sender-Description" => "Bag from repository X containing item to be preserved",
+        "Context" => "Some important detail"
       }
       assert_equal expected, bag_info.data
     end
@@ -76,9 +78,7 @@ class AptrustInfoBagTagTest < Minitest::Test
     test_data = @base_test_data.merge({
       access: "Consortia",
       storage_option: "Glacier-Deep-OR",
-      extra_data: {
-        Context: "Some important detail"
-      }
+      extra_data: {"Context" => "Some important detail"}
     })
     aptrust_info = BagTag::AptrustInfoBagTag.new(**test_data)
     expected = <<~TEXT

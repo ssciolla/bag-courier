@@ -20,22 +20,28 @@ module BagTag
       identifier:,
       description:,
       bag_count: [1, 1],
-      organization: VALUE_SOURCE_ORG_DEFAULT
+      organization: VALUE_SOURCE_ORG_DEFAULT,
+      extra_data: nil
     )
       @identifier = identifier
       @description = description
       @bag_count = bag_count
       @organization = organization
+      @extra_data = extra_data
     end
 
     def data
-      {
+      data = {
         KEY_SOURCE_ORG => @organization,
         KEY_COUNT => "#{@bag_count[0]} of #{@bag_count[1]}",
         KEY_DATE => BagInfoBagTag.datetime_now,
         KEY_INTERNAL_SENDER_ID => @identifier,
         KEY_INTERNAL_SENDER_DESC => @description
       }
+      if @extra_data
+        data = data.merge(@extra_data)
+      end
+      data
     end
   end
 
@@ -124,7 +130,7 @@ module BagTag
         Access: @access,
         "Storage-Option": @storage_option
       }
-      if !@extra_data.nil?
+      if @extra_data
         data = data.merge(@extra_data)
       end
       data

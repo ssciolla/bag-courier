@@ -28,7 +28,12 @@ module Dispatcher
       @bag_repo = bag_repo
     end
 
-    def dispatch(object_metadata:, data_transfer:, context: nil)
+    def dispatch(
+      object_metadata:,
+      data_transfer:,
+      context: nil,
+      extra_bag_info: nil
+    )
       bag_id = BagCourier::BagId.new(
         repository: @repository.name,
         object_id: object_metadata.id,
@@ -36,7 +41,8 @@ module Dispatcher
       )
       bag_info = BagTag::BagInfoBagTag.new(
         identifier: object_metadata.id,
-        description: @repository.description
+        description: @repository.description,
+        extra_data: extra_bag_info
       )
       tags = [
         BagTag::AptrustInfoBagTag.new(
