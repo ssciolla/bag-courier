@@ -21,10 +21,12 @@ module APIBackend
       end
     end
 
-    def get(url, params = nil)
+    def get(url:, params: nil)
       resp = @conn.get(url, params)
       JSON.parse(resp.body)
     rescue Faraday::Error => error
+      return nil if error.is_a?(Faraday::ResourceNotFound)
+
       message = "Error occurred while interacting with REST API at #{@base_url}. " \
         "Error type: #{error.class}; " \
         "status code: #{error.response_status || "none"}; " \

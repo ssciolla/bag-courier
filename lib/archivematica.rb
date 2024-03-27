@@ -50,14 +50,14 @@ module Archivematica
     end
     private :get_next_url
 
-    def get_objects_from_pages(url, params = nil)
+    def get_objects_from_pages(url:, params: nil)
       no_more_pages = false
       current_url = url
       current_params = params
       results = []
       logger.debug("Starting URL: #{current_url}")
       until no_more_pages
-        data = @backend.get(current_url, current_params)
+        data = @backend.get(url: current_url, params: current_params)
         results += data["objects"]
         meta = data["meta"]
         logger.debug("Meta: #{meta}")
@@ -72,6 +72,22 @@ module Archivematica
       results
     end
 
+    def create_package(package_data)
+      Package.new(
+        uuid: package_data["uuid"],
+        path: package_data["current_full_path"],
+        size: package_data["size"],
+        stored_date: package_data["stored_date"]
+      )
+    end
+    private :create_package
+
+    # Returns package or nil if it doesn't exist
+    def get_package(uuid)
+      package_data = @backend.get(url: PACKAGE_PATH + uuid)
+      package_data && create_package(package_data)
+    end
+
     def get_packages(location_uuid:, stored_date: nil)
       params = {
         "current_location" => location_uuid,
@@ -83,15 +99,8 @@ module Archivematica
         params["stored_date__gt"] = formatted_stored_date
       end
 
-      package_objects = get_objects_from_pages(PACKAGE_PATH, params)
-      packages = package_objects.map do |o|
-        Package.new(
-          uuid: o["uuid"],
-          path: o["current_full_path"],
-          size: o["size"],
-          stored_date: o["stored_date"]
-        )
-      end
+      package_objects = get_objects_from_pages(url: PACKAGE_PATH, params: params)
+      packages = package_objects.map { |o| create_package(o) }
       logger.info(
         "Number of packages found in location #{location_uuid} " +
         "with #{PackageStatus::UPLOADED} status" +
@@ -162,10 +171,10 @@ module Archivematica
     end
     private :create_package_data_object
 
-    # def get_package_data_object(package_id)
-    #   package = @api.get_package(package_id)
-    #   package && create_package_data_object(package)
-    # end
+    def get_package_data_object(package_id)
+      package = @api.get_package(package_id)
+      package && create_package_data_object(package)
+    end
 
     def get_package_data_objects(stored_date:, package_filter: AllPackageFilter.new)
       logger.info("Archivematica instance: #{@name}")

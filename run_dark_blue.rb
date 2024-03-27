@@ -61,14 +61,15 @@ class DarkBlueJob
 
       max_updated_at = @package_repo.get_max_updated_at_for_repository(arch_config.repository_name)
 
-      package_data_objs = Archivematica::ArchivematicaService.new(
+      arch_service = Archivematica::ArchivematicaService.new(
         name: arch_config.name,
         api: arch_api,
-        location_uuid: api_config.location_uuid,
+        location_uuid: api_config.location_uuid
+      )
+      package_data_objs = arch_service.get_package_data_objects(
         stored_date: max_updated_at,
         **(@object_size_limit ? {package_filter: Archivematica::SizePackageFilter.new(@object_size_limit)} : {})
-      ).get_package_data_objects
-
+      )
       package_data_objs.each do |package_data|
         logger.debug(package_data)
         created = @package_repo.create(

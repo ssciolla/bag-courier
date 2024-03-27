@@ -30,13 +30,21 @@ class FaradayAPIBackendTest < Minitest::Test
       [401, {"Content-Type": "text/plain"}, "Unauthorized"]
     end
     error = assert_raises APIError do
-      @stubbed_api_backend.get("file/")
+      @stubbed_api_backend.get(url: "file/")
     end
     expected = "Error occurred while interacting with REST API at #{@base_url}. " \
       "Error type: Faraday::UnauthorizedError; " \
       "status code: 401; " \
       "body: Unauthorized"
     assert_equal expected, error.message
+  end
+
+  def test_get_returns_nil_when_resource_not_found
+    @stubs.get(@base_url + "file/") do |env|
+      [404, {"Content-Type": "text/plain"}, "Resource not found"]
+    end
+    result = @stubbed_api_backend.get(url: "file/")
+    refute(result)
   end
 
   def test_get_retries_on_timeout_to_failure
@@ -49,7 +57,7 @@ class FaradayAPIBackendTest < Minitest::Test
 
     # Final error is caught and transformed.
     error = assert_raises APIError do
-      @stubbed_api_backend.get("file/")
+      @stubbed_api_backend.get(url: "file/")
     end
     expected = "Error occurred while interacting with REST API at http://some-service.org/api/v1/. " \
       "Error type: Faraday::TimeoutError; " \
@@ -72,7 +80,7 @@ class FaradayAPIBackendTest < Minitest::Test
       end
     end
 
-    data = @stubbed_api_backend.get("file/")
+    data = @stubbed_api_backend.get(url: "file/")
     assert_equal 2, calls
     assert_equal ({}), data
   end
