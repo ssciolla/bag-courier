@@ -12,7 +12,7 @@ gem "sequel", "~> 5.77"
 
 gem "sftp",
   git: "https://github.com/mlibrary/sftp",
-  tag: "v0.3.0"
+  tag: "sftp/v0.4.2"
 
 group :test do
   gem "minitest", "~> 5.20"
