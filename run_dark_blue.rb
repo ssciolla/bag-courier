@@ -90,7 +90,7 @@ class DarkBlueJob
             remote_client: remote_client,
             remote_path: package_data.remote_path
           ),
-          context: package_data.context,
+          context: arch_config.name,
           validator: InnerBagValidator.new(inner_bag_dir)
         )
         courier.deliver

@@ -230,7 +230,6 @@ class ArchivematicaServiceTest < Minitest::Test
           creator: "Not available",
           description: "Not available"
         ),
-        context: "test",
         stored_time: Time.utc(2024, 2, 18)
       ),
       RepositoryPackageData.new(
@@ -241,7 +240,6 @@ class ArchivematicaServiceTest < Minitest::Test
           creator: "Not available",
           description: "Not available"
         ),
-        context: "test",
         stored_time: Time.utc(2024, 2, 19)
       )
     ]

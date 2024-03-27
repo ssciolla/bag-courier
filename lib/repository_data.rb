@@ -3,7 +3,6 @@ module RepositoryData
     "RepositoryPackageData",
     :remote_path,
     :metadata,
-    :context,
     :stored_time,
     keyword_init: true
   )
