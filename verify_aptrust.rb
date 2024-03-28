@@ -20,6 +20,7 @@ DB = config.database && Sequel.connect(
 require_relative "lib/aptrust"
 require_relative "lib/bag_repository"
 require_relative "lib/status_event_repository"
+require_relative "lib/bag_status"
 
 class APTrustVerificationError < StandardError
 end
@@ -45,7 +46,7 @@ class APTrustVerificationJob
       logger.debug(bag)
       latest_event = @status_event_repo.get_latest_event_for_bag(bag_identifier: bag.identifier)
       logger.debug(latest_event)
-      next if latest_event&.status != "deposited"
+      next if latest_event&.status != BagStatus::DEPOSITED
 
       logger.info("Deposit with pending verification found for bag #{bag.identifier}.")
       @verifier.verify(bag_identifier: bag.identifier, deposited_at: latest_event.timestamp)

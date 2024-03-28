@@ -1,5 +1,5 @@
 require "semantic_logger"
-
+require_relative "bag_status"
 require_relative "../db/database_schema" if DB
 
 Sequel.default_timezone = :utc
@@ -10,16 +10,6 @@ module StatusEventRepository
 
   class StatusEventRepositoryError < StandardError
   end
-
-  STATUSES = %w[
-    bagged bagging
-    copied copying
-    deposited depositing deposit_skipped
-    failed
-    packed packing
-    validated validating validation_skipped
-    verified verify_failed
-  ]
 
   StatusEvent = Struct.new(
     "StatusEvent",
@@ -65,7 +55,7 @@ module StatusEventRepository
     private :get_next_id!
 
     def create(bag_identifier:, status:, timestamp:, note: nil)
-      if !STATUSES.include?(status)
+      if !BagStatus.check_status?(status)
         raise UnknownStatusError
       end
       event = StatusEvent.new(
@@ -107,7 +97,7 @@ module StatusEventRepository
     private :find_or_create_status
 
     def create(bag_identifier:, status:, timestamp:, note: nil)
-      if !STATUSES.include?(status)
+      if !BagStatus.check_status?(status)
         raise UnknownStatusError
       end
       status = find_or_create_status(status)

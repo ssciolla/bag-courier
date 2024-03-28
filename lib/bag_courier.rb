@@ -3,6 +3,7 @@ require "semantic_logger"
 
 require_relative "bag_adapter"
 require_relative "remote_client"
+require_relative "bag_status"
 
 module BagCourier
   class BagId
@@ -76,9 +77,9 @@ module BagCourier
           "tar_src=#{tar_src}",
           "tar_file=#{tar_file}"
         ])
-        track!(status: "packing")
+        track!(status: BagStatus::PACKING)
         Minitar.pack(tar_src, File.open(tar_file, "wb"))
-        track!(status: "packed")
+        track!(status: BagStatus::PACKED)
       end
       new_path = target_path + EXT_TAR
       logger.debug([
@@ -94,35 +95,35 @@ module BagCourier
 
       logger.debug("dry_run=#{@dry_run}")
       if @dry_run
-        track!(status: "deposit_skipped")
+        track!(status: BagStatus::DEPOSIT_SKIPPED)
         return
       end
 
       logger.info("Sending bag to #{@target_client.remote_text}")
       # add timing
-      track!(status: "depositing")
+      track!(status: BagStatus::DEPOSITING)
       @target_client.send_file(local_file_path: file_path)
-      track!(status: "deposited")
+      track!(status: BagStatus::DEPOSITED)
     end
 
     def deliver
       logger.debug("bag_id=#{@bag_id}")
 
       begin
-        track!(status: "bagging")
+        track!(status: BagStatus::BAGGING)
         bag_path = File.join(@working_dir, @bag_id.to_s)
         bag = BagAdapter::BagAdapter.new(bag_path)
 
-        track!(status: "copying")
+        track!(status: BagStatus::COPYING)
         @data_transfer.transfer(bag.data_dir)
-        track!(status: "copied")
+        track!(status: BagStatus::COPIED)
 
         if @validator
-          track!(status: "validating")
+          track!(status: BagStatus::VALIDATING)
           @validator.validate(bag.data_dir)
-          track!(status: "validated")
+          track!(status: BagStatus::VALIDATED)
         else
-          track!(status: "validation_skipped")
+          track!(status: BagStatus::VALIDATION_SKIPPED)
         end
 
         @tags.each do |tag|
@@ -133,7 +134,7 @@ module BagCourier
         end
         bag.add_bag_info(@bag_info.data)
         bag.add_manifests
-        track!(status: "bagged", note: "bag_path: #{bag_path}")
+        track!(status: BagStatus::BAGGED, note: "bag_path: #{bag_path}")
 
         tar_file_path = tar(bag.bag_dir)
         export_tar_file_path = File.join(@export_dir, File.basename(tar_file_path))
@@ -148,7 +149,7 @@ module BagCourier
         deposit(file_path: export_tar_file_path)
       rescue => e
         note = "failed with error #{e.class}: #{e.full_message}"
-        track!(status: "failed", note: note)
+        track!(status: BagStatus::FAILED, note: note)
         logger.error("BagCourier.deliver #{note}")
       end
     end

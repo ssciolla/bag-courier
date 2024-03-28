@@ -1,6 +1,7 @@
 require "semantic_logger"
 
 require_relative "api_backend"
+require_relative "bag_status"
 
 module APTrust
   module IngestStatus
@@ -92,7 +93,7 @@ module APTrust
       when APTrust::IngestStatus::SUCCESS
         @status_event_repo.create(
           bag_identifier: bag_identifier,
-          status: "verified",
+          status: BagStatus::VERIFIED,
           timestamp: Time.now.utc,
           note: "Ingest to APTrust verified"
         )
@@ -100,7 +101,7 @@ module APTrust
       when APTrust::IngestStatus::FAILED, APTrust::IngestStatus::CANCELLED
         @status_event_repo.create(
           bag_identifier: bag_identifier,
-          status: "verify_failed",
+          status: BagStatus::VERIFY_FAILED,
           timestamp: Time.now.utc,
           note: "Ingest to APTrust failed with status \"#{status}\""
         )
